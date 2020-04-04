@@ -1,0 +1,143 @@
+﻿463151784
+15 15 0
+...xxx.xxx.....
+...xxx.xxx.....
+.xxxxx.xxx.....
+.xxxx..........
+...............
+.........xxx...
+.xxx.....xxxx..
+.xxxxxx..xxxx..
+.xxxxxx........
+.xx.xxxx.......
+....xxxxx....xx
+....xxxxx....xx
+...............
+.xx............
+.xx............
+14 0 6 6 3 4 6 -1
+NA
+NA
+13 0 6 5 2 4 6 -1
+NA
+SURFACE 7
+13 1 6 5 1 4 6 -1
+NA
+MOVE N
+12 1 6 5 0 4 6 -1
+NA
+MOVE N
+12 2 6 5 0 4 6 -1
+NA
+MOVE N
+11 2 6 5 0 4 6 -1
+NA
+MOVE N
+11 3 6 5 0 4 6 -1
+NA
+MOVE N
+10 3 6 5 0 4 6 -1
+NA
+MOVE N
+10 4 6 5 0 4 6 -1
+NA
+MOVE N
+9 4 6 5 0 4 6 -1
+NA
+MOVE N
+8 4 6 5 0 4 6 -1
+NA
+MOVE E
+8 5 6 5 0 4 6 -1
+NA
+MOVE E
+8 6 6 5 0 4 6 -1
+NA
+MOVE E
+7 6 5 5 0 4 6 -1
+NA
+TORPEDO 6 6|MOVE E
+7 7 5 5 0 4 6 -1
+NA
+MOVE E
+8 7 5 5 0 4 6 -1
+NA
+SILENCE
+8 8 5 5 0 4 6 -1
+NA
+MOVE E
+7 8 5 5 0 4 6 -1
+NA
+MOVE S
+7 8 4 5 0 4 6 -1
+NA
+MOVE S
+7 7 4 5 0 4 6 -1
+NA
+MOVE S
+7 6 4 5 0 4 6 -1
+NA
+MOVE E
+8 6 4 5 0 4 6 -1
+NA
+MOVE N
+8 7 2 3 0 4 6 -1
+NA
+TORPEDO 8 7|MOVE N
+8 8 2 3 0 4 6 -1
+NA
+MOVE N
+9 8 2 3 0 4 6 -1
+NA
+MOVE N
+9 9 2 3 0 4 6 -1
+NA
+MOVE E
+8 9 2 3 0 4 6 -1
+NA
+MOVE E
+8 9 1 3 0 4 6 -1
+NA
+MOVE E
+8 8 1 3 0 4 6 -1
+NA
+SILENCE
+8 7 1 3 0 4 6 -1
+NA
+MOVE E
+7 7 1 3 0 4 6 -1
+NA
+MOVE E
+7 6 1 3 0 4 6 -1
+NA
+MOVE N
+8 6 1 3 0 4 6 -1
+NA
+MOVE N
+8 5 1 3 0 4 6 -1
+NA
+MOVE E
+7 5 1 3 0 4 6 -1
+NA
+MOVE N
+6 5 1 3 0 4 6 -1
+NA
+SILENCE
+6 6 1 3 0 4 6 -1
+NA
+MOVE W
+5 6 1 3 0 4 6 -1
+NA
+MOVE S
+5 5 1 3 0 4 6 -1
+NA
+MOVE W
+5 4 1 3 0 4 6 -1
+NA
+MOVE W
+6 4 1 3 0 4 6 -1
+NA
+MOVE S
+7 4 1 3 0 4 6 -1
+NA
+MOVE S
