@@ -14,16 +14,16 @@ public static class S
         return 1 + (y / 5) * 3 + (x / 5);
     }
 
-    public static void EraseEnemyPath(Map map)
+    public static void EraseRecordedPath(bool[,] recordedPath, int width, int height)
     {
-        for (int x = 0; x < map.width * 2 - 1; ++x)
+        for (int x = 0; x < width * 2 - 1; ++x)
         {
-            for (int y = 0; y < map.height * 2 - 1; ++y)
+            for (int y = 0; y < height * 2 - 1; ++y)
             {
-                map.enemyPath[x, y] = false;
+                recordedPath[x, y] = false;
             }
         }
-        map.enemyPath[map.width - 1, map.height - 1] = true;
+        recordedPath[width - 1, height - 1] = true;
     }
 
     public static void SectorToCoord(int sector, out int minX, out int maxX, out int minY, out int maxY)
@@ -33,9 +33,9 @@ public static class S
         minY = ((sector - 1) / 3) * 5;
         maxY = ((sector - 1) / 3 + 1) * 5 - 1;
     }
-    public static bool isOutOfBoundsOrIsland(Map map, int x, int y)
+    public static bool isOutOfBoundsOrIsland(bool[,] islands, int x, int y, int width, int height)
     {
-        return x < 0 || x >= map.width || y < 0 || y >= map.height || map.squares[x, y].island;
+        return x < 0 || x >= width || y < 0 || y >= height || islands[x, y];
     }
     public static int MoveX(char direction)
     {

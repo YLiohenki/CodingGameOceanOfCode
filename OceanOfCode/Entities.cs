@@ -14,36 +14,76 @@ public class Player
     public int mineCooldown;
     public List<Order> previousOrders = new List<Order>();
 }
-public class MapSquare
+
+public class PossiblePositions
 {
-    public bool island;
-    public bool visited;
-    public bool enemyPossible;
-    public int reachTorpedo;
-    public bool reachSilence;
+    public bool[,] map;
+    public int total = 225;
+
+    public PossiblePositions Clone()
+    {
+        var result = new PossiblePositions();
+        result.map = map.Clone() as bool[,];
+        result.total = total;
+        return result;
+    }
 }
 public class Map
 {
     public int height, width;
-    public int totalPossibleEnemySpots = 225;
     public bool canReachPossibleEnemy = false;
-    public MapSquare[,] squares;
+    public PossiblePositions enemyPossibility = new PossiblePositions();
+    public PossiblePositions mePossibility = new PossiblePositions();
+    public bool[,] islands;
+    public int[,] reachTorpedo;
     public bool[,] enemyPath;
+    public bool[,] myPath;
+    public bool[,] visited;
+    public bool[,] reachSilence;
 
     public string[] getMap(string prop)
     {
-        var result = new string[height];
-        for (int i = 0; i < width; i++)
+        if (prop == "enemyPossibility" || prop == "mePossibility" || prop == "visited" || prop == "islands" || prop == "reachSilence")
         {
-            var line = "";
-            for (int j = 0; j < height; j++)
+            var result = new string[height];
+            for (int i = 0; i < height; ++i)
             {
-                if (prop == "enemyPossible")
-                    line += squares[j, i].enemyPossible == true ? 'x' : '-';
+                var line = "";
+                for (int j = 0; j < width; ++j)
+                {
+                    if (prop == "enemyPossibility")
+                        line += enemyPossibility.map[j, i] == true ? 'x' : '-';
+                    else if (prop == "mePossibility")
+                        line += mePossibility.map[j, i] == true ? 'x' : '-';
+                    else if (prop == "visited")
+                        line += visited[j, i] == true ? 'x' : '-';
+                    else if (prop == "islands")
+                        line += islands[j, i] == true ? 'x' : '-';
+                    else if (prop == "reachSilence")
+                        line += reachSilence[j, i] == true ? 'x' : '-';
+                }
+                result[i] = line;
             }
-            result[i] = line;
+            return result;
         }
-        return result;
+        if (prop == "enemyPath" || prop == "myPath")
+        {
+            var result = new string[height * 2 - 1];
+            for (int i = 0; i < height * 2 - 1; ++i)
+            {
+                var line = "";
+                for (int j = 0; j < width * 2 - 1; ++j)
+                {
+                    if (prop == "enemyPath")
+                        line += enemyPath[j, i] == true ? 'x' : '-';
+                    else if (prop == "myPath")
+                        line += myPath[j, i] == true ? 'x' : '-';
+                }
+                result[i] = line;
+            }
+            return result;
+        }
+        return null;
     }
 }
 
@@ -74,6 +114,7 @@ public class Action
     public char direction;
     public int sector;
     public Ability charge;
+    public bool result;
 }
 
 public class Order
@@ -149,6 +190,7 @@ public class Order
 
             if (str.StartsWith("MINE"))
             {
+                result.actions.Add(new Action() { type = ActionType.mine });
             }
         }
         return result;

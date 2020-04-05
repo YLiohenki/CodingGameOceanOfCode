@@ -45,30 +45,39 @@ public class Program
 
     public string InitGame(List<string> fromConsole, int seed)
     {
-        decider = new Decider(seed);
         map = new Map();
         var inputs = fromConsole[0].Split(' ');
         int width = int.Parse(inputs[0]);
         int height = int.Parse(inputs[1]);
+        decider = new Decider(seed, width, height);
         int myId = int.Parse(inputs[2]);
         map.height = height;
         map.width = width;
-        map.squares = new MapSquare[height, width];
-        map.totalPossibleEnemySpots = 0;
+        map.islands = new bool[width, height];
+        map.reachSilence = new bool[width, height];
+        map.visited = new bool[width, height];
+        map.enemyPossibility.map = new bool[width, height];
+        map.mePossibility.map = new bool[width, height];
+        map.reachTorpedo = new int[width, height];
+        map.enemyPossibility.total = 0;
+        map.mePossibility.total = 0;
+
         map.enemyPath = new bool[width * 2 - 1, height * 2 - 1];
-        map.enemyPath[width - 1, height - 1] = false;
+        map.myPath = new bool[width * 2 - 1, height * 2 - 1];
+        map.enemyPath[width - 1, height - 1] = true;
+        map.myPath[width - 1, height - 1] = true;
         for (int y = 0; y < height; y++)
         {
             string line = fromConsole[1 + y];
             var islands = line.ToCharArray().Select(c => c == 'x').ToArray();
             for (int x = 0; x < width; x++)
             {
-                map.squares[x, y] = new MapSquare()
-                {
-                    island = islands[x],
-                    enemyPossible = !islands[x]
-                };
-                map.totalPossibleEnemySpots += islands[x] ? 0 : 1;
+                var isIsland = islands[x];
+                map.islands[x, y] = isIsland;
+                map.enemyPossibility.map[x, y] = !isIsland;
+                map.enemyPossibility.total += isIsland ? 0 : 1;
+                map.mePossibility.map[x, y] = !isIsland;
+                map.mePossibility.total += isIsland ? 0 : 1;
             }
         }
 
@@ -104,6 +113,10 @@ public class Program
         me.mineCooldown = mineCooldown;
         me.torpedoCooldown = torpedoCooldown;
         enemy.health = oppLife;
+        if (sonarResult == "Y" || sonarResult == "N")
+        {
+            me.previousOrders.Last().actions.Find(a => a.type == ActionType.sonar).result = sonarResult == "Y";
+        }
 
         enemy.previousOrders.Add(Order.ParceOrder(opponentOrders));
 

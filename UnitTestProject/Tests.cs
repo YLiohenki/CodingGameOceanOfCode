@@ -20,20 +20,20 @@ namespace UnitTestProject
         {
             var lines = input.Replace("\r\n", "\n").Split('\n');
             int seed = int.Parse(lines[0]);
-            var islandMap = String.Join(Environment.NewLine, lines.Skip(2).Take(15));
+            var islandMap = String.Join('\n', lines.Skip(2).Take(15));
             var cycleInput = lines.Skip(17).Select((value, index) => new { PairNum = index / 3, value })
    .GroupBy(pair => pair.PairNum)
-   .Select(grp => String.Join(Environment.NewLine, grp.Select(g => g.value))).ToList();
+   .Select(grp => String.Join('\n', grp.Select(g => g.value))).ToList();
             return ProcessGame(islandMap, cycleInput, seed);
         }
 
         public List<string> ProcessGame(string islandMap, List<string> cycleInput, int seed)
         {
             var initInput = new List<string> { "15 15 0" };
-            initInput.AddRange(islandMap.Split(Environment.NewLine));
+            initInput.AddRange(islandMap.Split('\n'));
             var result = new List<string>();
             this.program.InitGame(initInput, seed);
-            cycleInput.ForEach(ci => result.Add(this.program.GameCycle(ci.Split(Environment.NewLine).ToList())));
+            cycleInput.ForEach(ci => result.Add(this.program.GameCycle(ci.Split('\n').ToList())));
             return result;
         }
 
@@ -58,7 +58,7 @@ namespace UnitTestProject
             @"2 0 6 6 3 -1 -1 -1 -1
 NA
 NA"}, 0);
-            Assert.IsFalse(program.map.squares[program.me.x, program.me.y].island);
+            Assert.IsFalse(program.map.islands[program.me.x, program.me.y]);
 
             Assert.IsTrue(output.Any(o => o.Contains("MOVE")));
         }
@@ -89,10 +89,10 @@ NA
 MOVE S", @"5 1 6 6 1 -1 -1 -1
 NA
 MOVE S"}, 0);
-            Assert.IsFalse(program.map.squares[program.me.x, program.me.y].island);
+            Assert.IsFalse(program.map.islands[program.me.x, program.me.y]);
 
             Assert.IsTrue(output.Any(o => o.Contains("MOVE")));
-            Assert.IsTrue(program.map.squares[5, 0].island);
+            Assert.IsTrue(program.map.islands[5, 0]);
         }
 
         [TestMethod]
@@ -123,40 +123,11 @@ NA
 MOVE S", @"12 7 6 6 0 -1 -1 -1
 NA
 MOVE S"}, 0);
-            Assert.IsFalse(program.map.squares[program.me.x, program.me.y].island);
+            Assert.IsFalse(program.map.islands[program.me.x, program.me.y]);
 
             Assert.IsTrue(output.Any(o => o.Contains("MOVE")));
 
             Assert.IsTrue(output.Any(o => o.Contains("TORPEDO")));
-        }
-
-        [TestMethod]
-        public void Shouldnt_stack_in_surface_loop()
-        {
-            var output = this.ProcessGame(@".............xx
-..........xxx..
-.....xx...xxxx.
-.....xx...xxxx.
-...............
-...xx...xx.....
-...xx...xx.....
-..............x
-..............x
-...............
-...............
-...............
-...xx.xxx......
-...xx.xxx......
-......xxx......", new List<string> { @"14 1 6 6 1 -1 -1 -1
-NA
-MOVE E", @"13 1 6 6 0 -1 -1 -1
-NA
-MOVE E", @"13 1 6 6 3 -1 -1 -1
-NA
-TORPEDO 2 5|MOVE E", @"13 1 5 6 3 -1 -1 -1
-NA
-MOVE N" }, 0);
-            Assert.IsTrue(!output.Last().Contains("SURFACE"));
         }
 
         [TestMethod]
@@ -185,7 +156,7 @@ NA
 MOVE S", @"10 4 6 6 0 -1 -1 -1
 NA
 MOVE S" }, 1570830210);
-            Assert.IsTrue(program.map.totalPossibleEnemySpots < 180 && program.map.totalPossibleEnemySpots > 0);
+            Assert.IsTrue(program.map.enemyPossibility.total < 180 && program.map.enemyPossibility.total > 0);
         }
 
         [TestMethod]
@@ -291,7 +262,7 @@ NA
 MOVE N"
           }, 533308942);
 
-            Assert.IsTrue(program.map.totalPossibleEnemySpots > 0);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
             Assert.IsTrue(!output.Any(o => o.StartsWith("TORPEDO")));
         }
 
@@ -300,7 +271,7 @@ MOVE N"
         {
             string text = System.IO.File.ReadAllText(@"./../../../FullGame1.txt");
             var output = ProcessInputsBulk(text);
-            Assert.IsTrue(program.map.totalPossibleEnemySpots > 0);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
             Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
         }
 
@@ -309,8 +280,44 @@ MOVE N"
         {
             string text = System.IO.File.ReadAllText(@"./../../../FullGame2.txt");
             var output = ProcessInputsBulk(text);
-            Assert.IsTrue(program.map.totalPossibleEnemySpots > 0);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
             Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
+        }
+
+        [TestMethod]
+        public void Should_fire_eventually3()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../FullGame3.txt");
+            var output = ProcessInputsBulk(text);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
+        }
+
+        [TestMethod]
+        public void Should_fire_eventually4()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../FullGame4.txt");
+            var output = ProcessInputsBulk(text);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
+        }
+
+        [TestMethod]
+        public void Should_fire_eventually5()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../FullGame5.txt");
+            var output = ProcessInputsBulk(text);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
+        }
+
+        [TestMethod]
+        public void Should_use_silence_eventually5()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../FullGame6.txt");
+            var output = ProcessInputsBulk(text);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(output.Any(o => o.StartsWith("SILENCE")));
         }
     }
 }
