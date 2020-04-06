@@ -1,0 +1,179 @@
+﻿241864027
+15 15 0
+..xxx...xxx....
+..xxx...xx.....
+...xx..........
+...............
+.xx......xx....
+.xx......xx....
+...............
+...xx.....xx...
+...xx.....xx...
+..............x
+..xxx.........x
+..xxx.xx..xx...
+......xx..xx...
+..........xx...
+...............
+0 0 6 6 3 4 6 3
+NA
+NA
+1 0 6 6 3 3 6 3
+NA
+MOVE N
+1 1 6 6 3 2 6 3
+NA
+MOVE N
+0 1 6 6 3 1 6 3
+NA
+MOVE N
+0 2 6 6 3 0 6 3
+NA
+MOVE E
+1 2 6 6 3 4 5 3
+N
+MOVE S
+1 3 6 6 3 3 5 3
+NA
+MOVE S
+0 3 6 6 3 3 4 3
+NA
+MOVE E
+0 4 6 6 3 3 3 3
+NA
+MOVE S
+0 5 6 6 3 3 2 3
+NA
+MOVE E
+0 6 6 6 3 3 1 3
+NA
+SILENCE|MOVE E
+1 6 6 6 3 2 1 3
+NA
+MOVE E
+2 6 6 6 3 1 1 3
+NA
+MOVE N
+2 7 6 6 3 1 0 3
+NA
+MOVE N
+1 7 6 6 2 1 6 3
+NA
+MOVE N
+0 7 6 6 2 1 5 3
+NA
+MOVE E
+0 8 6 6 2 1 4 3
+NA
+MOVE E
+1 8 6 6 2 1 3 3
+NA
+SILENCE|MOVE S
+2 8 6 6 2 0 3 3
+NA
+MOVE W
+2 9 6 6 2 4 2 3
+N
+MOVE S
+1 9 6 6 2 4 1 3
+NA
+MOVE E
+0 9 6 6 2 4 0 3
+NA
+MOVE E
+0 10 6 6 1 4 6 3
+NA
+MOVE E
+1 10 6 6 0 4 6 3
+NA
+MOVE E
+1 11 6 6 0 4 5 3
+NA
+SILENCE|MOVE N
+0 11 6 6 0 4 4 3
+NA
+MOVE E
+0 12 6 6 0 4 3 3
+NA
+MOVE N
+1 12 6 6 0 4 2 3
+NA
+MOVE E
+1 13 6 6 0 4 1 3
+NA
+MOVE E
+0 13 6 6 0 4 0 3
+NA
+MOVE E
+0 14 6 6 0 3 6 3
+NA
+MOVE S
+1 14 6 6 0 3 5 3
+NA
+SILENCE|MOVE S
+2 14 6 6 0 3 4 3
+NA
+MOVE S
+2 13 6 6 0 3 3 3
+NA
+MOVE S
+3 13 6 6 0 3 2 3
+NA
+MOVE S
+3 14 6 6 0 3 1 3
+NA
+MOVE S
+4 14 6 6 0 3 0 3
+NA
+MOVE S
+5 14 6 6 0 2 6 3
+NA
+MOVE S
+5 13 6 6 0 2 5 3
+NA
+SILENCE|MOVE W
+4 13 6 6 0 2 4 3
+NA
+MOVE N
+4 12 6 6 0 2 3 3
+NA
+MOVE N
+5 12 6 6 0 2 2 3
+NA
+MOVE N
+5 11 6 6 0 2 1 3
+NA
+MOVE N
+5 10 6 6 0 2 0 3
+NA
+MOVE N
+5 9 6 6 0 1 6 3
+NA
+SILENCE|MOVE N
+5 8 6 6 0 1 5 3
+NA
+MOVE N
+5 7 6 6 0 1 4 3
+NA
+MOVE W
+5 6 6 6 0 1 3 3
+NA
+MOVE S
+4 6 6 6 0 1 2 3
+NA
+MOVE S
+4 5 6 6 0 1 1 3
+NA
+TORPEDO 11 5|MOVE S
+5 5 6 6 0 1 0 3
+NA
+MOVE S
+5 4 6 6 0 0 0 3
+NA
+MOVE S
+4 4 6 6 0 4 0 3
+Y
+TORPEDO 11 4|MOVE S
+3 4 6 6 0 3 6 3
+NA
+MOVE S

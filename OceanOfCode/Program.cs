@@ -5,10 +5,6 @@ using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
 public class Program
 {
     static void Main(string[] args)
@@ -39,7 +35,9 @@ public class Program
             Console.Error.WriteLine(fromConsole[0]);
             Console.Error.WriteLine(fromConsole[1]);
             Console.Error.WriteLine(fromConsole[2]);
-            Console.WriteLine(program.GameCycle(fromConsole));
+            var myAcionts = program.GameCycle(fromConsole);
+            Console.Error.WriteLine(myAcionts);
+            Console.WriteLine(myAcionts);
         }
     }
 
@@ -58,7 +56,9 @@ public class Program
         map.visited = new bool[width, height];
         map.enemyPossibility.map = new bool[width, height];
         map.mePossibility.map = new bool[width, height];
-        map.reachTorpedo = new int[width, height];
+        map.torpedo.reach = new int[width, height];
+        map.islandsList = new List<int[]>();
+        map.paint = new int[width, height];
         map.enemyPossibility.total = 0;
         map.mePossibility.total = 0;
 
@@ -78,6 +78,10 @@ public class Program
                 map.enemyPossibility.total += isIsland ? 0 : 1;
                 map.mePossibility.map[x, y] = !isIsland;
                 map.mePossibility.total += isIsland ? 0 : 1;
+                if (isIsland)
+                {
+                    map.islandsList.Add(new int[] { x , y });
+                }
             }
         }
 
@@ -115,7 +119,9 @@ public class Program
         enemy.health = oppLife;
         if (sonarResult == "Y" || sonarResult == "N")
         {
-            me.previousOrders.Last().actions.Find(a => a.type == ActionType.sonar).result = sonarResult == "Y";
+            var action = me.previousOrders.Last().actions.Find(a => a.type == ActionType.sonar);
+            if (action != null)
+                action.result = sonarResult == "Y";
         }
 
         enemy.previousOrders.Add(Order.ParceOrder(opponentOrders));

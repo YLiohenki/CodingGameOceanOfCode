@@ -16,12 +16,13 @@ namespace UnitTestProject
             this.program = new Program();
         }
 
-        public List<string> ProcessInputsBulk(string input)
+        public List<string> ProcessInputsBulk(string input, int version = 0)
         {
             var lines = input.Replace("\r\n", "\n").Split('\n');
             int seed = int.Parse(lines[0]);
             var islandMap = String.Join('\n', lines.Skip(2).Take(15));
-            var cycleInput = lines.Skip(17).Select((value, index) => new { PairNum = index / 3, value })
+            var divider = version > 0 ? 4 : 3;
+            var cycleInput = lines.Skip(17).Select((value, index) => new { PairNum = index / divider, value })
    .GroupBy(pair => pair.PairNum)
    .Select(grp => String.Join('\n', grp.Select(g => g.value))).ToList();
             return ProcessGame(islandMap, cycleInput, seed);
@@ -32,7 +33,7 @@ namespace UnitTestProject
             var initInput = new List<string> { "15 15 0" };
             initInput.AddRange(islandMap.Split('\n'));
             var result = new List<string>();
-            this.program.InitGame(initInput, seed);
+            result.Add(this.program.InitGame(initInput, seed));
             cycleInput.ForEach(ci => result.Add(this.program.GameCycle(ci.Split('\n').ToList())));
             return result;
         }
@@ -284,7 +285,7 @@ MOVE N"
             Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
         }
 
-        [TestMethod]
+        /*[TestMethod]
         public void Should_fire_eventually3()
         {
             string text = System.IO.File.ReadAllText(@"./../../../FullGame3.txt");
@@ -300,7 +301,7 @@ MOVE N"
             var output = ProcessInputsBulk(text);
             Assert.IsTrue(program.map.enemyPossibility.total > 0);
             Assert.IsTrue(output.Any(o => o.StartsWith("TORPEDO")));
-        }
+        }*/
 
         [TestMethod]
         public void Should_fire_eventually5()
@@ -318,6 +319,33 @@ MOVE N"
             var output = ProcessInputsBulk(text);
             Assert.IsTrue(program.map.enemyPossibility.total > 0);
             Assert.IsTrue(output.Any(o => o.StartsWith("SILENCE")));
+        }
+
+        [TestMethod]
+        public void Shouldnt_walk_back_into_visited()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../FullGame7.txt");
+            var output = ProcessInputsBulk(text);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(!output.Last().StartsWith("MOVE W"));
+        }
+
+        [TestMethod]
+        public void Shouldnt_lock_itself()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../HalfGame1.txt");
+            var output = ProcessInputsBulk(text);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(!output.Last().StartsWith("MOVE S"));
+        }
+
+        [TestMethod]
+        public void Shouldnt_lock_itself2()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../HalfGame2.txt");
+            var output = ProcessInputsBulk(text);
+            //Assert.IsTrue(program.map.enemyPossibility.total > 0);
+            Assert.IsTrue(!output.Last().StartsWith("MOVE N"));
         }
     }
 }

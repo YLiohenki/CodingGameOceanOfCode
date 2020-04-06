@@ -1,113 +1,296 @@
-﻿1744284796
+﻿1219895130
 15 15 0
-........xx.....
-.xx............
-.xx............
+.....xx........
+.....xx.......x
+.....xx.......x
 ...............
-.....xx..xx....
-.....xx..xx....
+..........xx...
+..........xx...
 ...............
-........xxx...x
-.....xx.xxx...x
-.....xx.xxx....
+...............
 ...............
 .xx............
 .xx............
-...xx..........
-...xx..........
-4 5 6 6 3 4 6 -1
+...............
+....xx.........
+....xx....xx.xx
+..........xx.xx
+0 0 6 6 3 4 6 3
 NA
 NA
-4 6 6 5 3 3 6 -1
-NA
-SURFACE 7
-5 6 6 5 3 2 6 -1
-NA
-MOVE N
-6 6 6 5 3 1 6 -1
+1 0 6 6 3 3 6 3
 NA
 MOVE N
-7 6 6 5 3 0 6 -1
+2 0 6 6 3 2 6 3
 NA
 MOVE N
-7 7 6 5 3 0 5 -1
+2 1 6 6 3 1 6 3
+NA
+MOVE N
+1 1 6 6 3 0 6 3
 NA
 MOVE E
-6 7 6 5 3 0 4 -1
+0 1 6 6 3 4 5 3
+N
+MOVE E
+0 2 6 6 3 3 5 3
 NA
 MOVE E
-5 7 6 5 2 0 4 -1
-NA
-MOVE N
-4 7 6 5 1 0 4 -1
-NA
-MOVE W
-4 8 6 5 0 0 4 -1
-NA
-MOVE W
-4 8 6 5 3 0 4 -1
-NA
-MOVE N
-4 9 6 5 2 0 4 -1
-NA
-SILENCE
-4 10 6 5 2 0 3 -1
-NA
-MOVE N
-5 10 6 5 2 0 2 -1
+1 2 6 6 3 2 5 3
 NA
 MOVE E
-6 10 6 4 2 0 1 -1
-NA
-TORPEDO 2 7|MOVE E
-7 10 6 4 2 0 0 -1
-NA
-MOVE E
-7 9 6 4 1 0 0 -1
+2 2 6 6 3 1 5 3
 NA
 MOVE S
-7 8 6 4 0 0 0 -1
-NA
-MOVE E
-7 8 5 4 0 0 0 -1
-NA
-MOVE E
-7 7 5 4 0 0 0 -1
-NA
-MOVE E
-7 6 3 3 0 0 0 -1
-NA
-TORPEDO 7 6|MOVE E
-8 6 3 3 0 0 0 -1
-NA
-MOVE N
-8 5 3 3 0 0 0 -1
-NA
-MOVE E
-7 5 3 3 0 0 0 -1
-NA
-MOVE N
-7 4 3 3 0 0 0 -1
+2 3 6 6 3 0 5 3
 NA
 MOVE W
-8 4 3 3 0 0 0 -1
+1 3 6 6 3 4 4 3
+N
+SILENCE|MOVE W
+0 3 6 6 3 3 4 3
+NA
+MOVE W
+0 4 6 6 3 2 4 3
+NA
+MOVE S
+1 4 6 6 3 1 4 3
+NA
+MOVE E
+2 4 6 6 3 0 4 3
+NA
+MOVE E
+3 4 6 6 3 4 3 3
+N
+MOVE E
+3 3 6 6 3 3 3 3
+NA
+MOVE S
+3 2 6 6 3 2 3 3
+NA
+SILENCE|MOVE W
+3 1 6 6 3 1 3 3
+NA
+MOVE W
+3 0 6 6 3 0 3 3
+NA
+MOVE W
+4 0 6 6 3 4 2 3
+N
+MOVE S
+4 1 6 6 3 3 2 3
+NA
+MOVE W
+4 2 6 6 3 2 2 3
+NA
+MOVE S
+4 3 6 6 3 1 2 3
+NA
+MOVE E
+5 3 6 6 3 0 2 3
+NA
+SILENCE|MOVE E
+6 3 6 6 3 4 1 3
+N
+MOVE N
+6 4 6 6 3 3 1 3
+NA
+MOVE E
+5 4 6 6 3 2 1 3
+NA
+MOVE E
+4 4 6 6 3 1 1 3
+NA
+MOVE E
+4 5 6 6 3 1 0 3
 NA
 MOVE N
-8 3 1 2 0 0 0 -1
+5 5 6 6 2 1 6 3
 NA
-TORPEDO 8 3|MOVE E
-7 3 1 2 0 0 0 -1
+MOVE E
+6 5 6 6 2 1 5 3
+NA
+SILENCE|MOVE E
+6 6 6 6 2 0 5 3
+NA
+SONAR 5|MOVE N
+5 6 6 6 2 4 4 3
+N
+MOVE N
+4 6 6 6 2 4 3 3
 NA
 MOVE N
-6 3 1 2 0 0 0 -1
+4 7 6 6 2 4 2 3
+NA
+MOVE E
+5 7 6 6 2 4 1 3
+NA
+MOVE E
+6 7 6 6 2 4 0 3
+NA
+MOVE E
+7 7 6 6 1 4 6 3
+NA
+SILENCE|MOVE E
+7 6 6 6 1 4 5 3
+NA
+MOVE E
+7 5 6 6 1 4 4 3
+NA
+MOVE E
+7 4 6 6 1 4 3 3
+NA
+MOVE S
+8 4 6 6 1 4 2 3
+NA
+MOVE S
+9 4 6 6 1 4 1 3
+NA
+MOVE S
+9 5 6 6 1 4 0 3
+NA
+MOVE E
+8 5 6 6 0 4 0 3
+NA
+SILENCE|MOVE S
+8 6 6 6 0 3 0 3
+NA
+MOVE S
+9 6 6 6 0 2 0 3
+NA
+MOVE S
+9 7 6 6 0 1 0 3
+NA
+MOVE S
+8 7 6 6 0 0 0 3
+NA
+MOVE S
+8 8 6 6 0 0 0 3
+NA
+MOVE S
+9 8 6 6 0 0 0 3
+NA
+MOVE S
+9 9 6 6 0 0 0 3
+NA
+SILENCE|MOVE S
+8 9 6 6 0 0 0 3
+NA
+MOVE S
+7 9 6 6 0 0 0 3
 NA
 MOVE W
-5 3 1 2 0 0 0 -1
+7 8 6 6 0 0 0 3
+NA
+MOVE N
+6 8 6 6 0 0 0 3
+NA
+MOVE N
+5 8 6 6 0 0 6 3
+NA
+MOVE N
+4 8 6 6 0 0 5 3
+NA
+MOVE N
+3 8 6 6 0 0 4 3
+NA
+SILENCE|MOVE N
+3 9 6 6 0 4 3 3
+Y
+MOVE N
+4 9 6 6 0 4 2 3
+NA
+MOVE N
+5 9 6 6 0 4 1 3
+NA
+MOVE N
+6 9 6 6 0 4 0 3
 NA
 MOVE W
-4 3 1 2 0 0 0 -1
+6 10 6 6 0 3 0 3
 NA
-SILENCE
-4 4 1 2 0 0 0 -1
+MOVE N
+5 10 6 6 0 2 0 3
+NA
+MOVE N
+4 10 6 6 0 1 0 3
+NA
+SILENCE|MOVE N
+3 10 6 6 0 0 0 3
 NA
 MOVE W
+3 11 6 6 0 4 0 3
+N
+MOVE S
+4 11 6 6 0 3 0 3
+NA
+MOVE S
+5 11 6 6 0 2 0 3
+NA
+MOVE W
+6 11 6 6 0 1 0 3
+NA
+MOVE N
+7 11 6 6 0 0 0 3
+NA
+SILENCE|MOVE N
+7 10 6 6 0 4 0 3
+N
+MOVE W
+8 10 6 6 0 3 0 3
+NA
+MOVE S
+8 11 6 6 0 2 0 3
+NA
+MOVE S
+8 12 6 6 0 1 0 3
+NA
+MOVE S
+7 12 6 6 0 0 6 3
+NA
+MOVE S
+6 12 6 6 0 0 5 3
+NA
+SILENCE|MOVE S
+6 13 6 6 0 4 4 3
+Y
+MOVE E
+6 14 6 6 0 4 3 3
+NA
+MOVE E
+7 14 6 6 0 4 2 3
+NA
+MOVE E
+7 13 6 6 0 4 1 3
+NA
+MOVE S
+8 13 6 6 0 4 0 3
+NA
+MOVE S
+8 14 6 6 0 3 0 3
+NA
+SILENCE|MOVE S
+9 14 6 6 0 2 0 3
+NA
+MOVE S
+9 13 6 6 0 1 0 3
+NA
+MOVE S
+9 12 4 6 0 0 0 3
+NA
+TORPEDO 9 12|MOVE S
+9 11 4 6 0 4 0 3
+N
+MOVE W
+9 10 2 6 0 3 0 3
+NA
+MOVE N|TORPEDO 9 10
+10 10 2 6 0 2 0 3
+NA
+MOVE N
+11 10 2 6 0 1 0 3
+NA
+MOVE N
+11 11 2 6 0 0 6 3
+NA
+MOVE N

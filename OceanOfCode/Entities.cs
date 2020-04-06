@@ -28,18 +28,29 @@ public class PossiblePositions
         return result;
     }
 }
+public class TorpedoPosition
+{
+    public int x;
+    public int y;
+    public double enemyExpectedDamage;
+    public double myDamage;
+    public bool canReach;
+    public int[,] reach;
+}
 public class Map
 {
     public int height, width;
-    public bool canReachPossibleEnemy = false;
     public PossiblePositions enemyPossibility = new PossiblePositions();
     public PossiblePositions mePossibility = new PossiblePositions();
+    public TorpedoPosition torpedo = new TorpedoPosition();
     public bool[,] islands;
-    public int[,] reachTorpedo;
+    public List<int[]> islandsList;
+    public double[,] probablyDamage;
     public bool[,] enemyPath;
     public bool[,] myPath;
     public bool[,] visited;
     public bool[,] reachSilence;
+    public int[,] paint;
 
     public string[] getMap(string prop)
     {
@@ -102,7 +113,8 @@ public enum ActionType
     torpedo,
     silence,
     sonar,
-    mine
+    mine,
+    trigger
 }
 
 public class Action
