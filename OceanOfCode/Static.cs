@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-public class S
+﻿public class S
 {
     public S(int _width, int _height)
     {

@@ -57,7 +57,7 @@ public class Decider
         {
             myDamage += 1;
         }
-        if (totalEnemyDamage - myDamage >= W.torpedoFileThreshold && totalEnemyDamage - myDamage >= map.torpedo.enemyExpectedDamage - map.torpedo.myDamage)
+        if (totalEnemyDamage - myDamage >= W.torpedoFireThreshold && totalEnemyDamage - myDamage >= map.torpedo.enemyExpectedDamage - map.torpedo.myDamage)
         {
             map.torpedo.canReach = true;
             map.torpedo.x = x;
@@ -118,9 +118,9 @@ public class Decider
         fillPossiblePositionOnMove(possibility, action, islands);
         var dX = S.MoveX(action.direction);
         var dY = S.MoveY(action.direction);
-        for (int x = dX >= 0 ? 0 : width * 2 - 2; dX >= 0 ? x < width * 2 - 1 : x >= 0; x += dX >= 0 ? 1 : -1)
+        for (int x = dX >= 0 ? 0 : width * 2 - 2; dX >= 0 ? x < width * 2 - 1 : x >= 0; x += (dX >= 0 ? 1 : -1))
         {
-            for (int y = dY >= 0 ? 0 : height * 2 - 2; dY >= 0 ? y < height * 2 - 1 : y >= 0; y += dY >= 0 ? 1 : -1)
+            for (int y = dY >= 0 ? 0 : height * 2 - 2; dY >= 0 ? y < height * 2 - 1 : y >= 0; y += (dY >= 0 ? 1 : -1))
             {
                 if (x + dX < 0 || x + dX >= height * 2 - 1 || y + dY < 0 || y + dY >= height * 2 - 1)
                 {
@@ -135,7 +135,7 @@ public class Decider
         recordedPath[width - 1, height - 1] = true;
     }
 
-    private void processTorped(bool[,] islands, int[,] reachTorpedo, Action action, PossiblePositions possibility)
+    private void processFireTorpedo(bool[,] islands, int[,] reachTorpedo, Action action, PossiblePositions atackerPossibility)
     {
         for (int x = 0; x < width; x++)
         {
@@ -151,11 +151,62 @@ public class Decider
             {
                 if (reachTorpedo[x, y] == 0)
                 {
-                    if (possibility.map[x, y])
+                    if (atackerPossibility.map[x, y])
                     {
-                        possibility.total -= 1;
+                        atackerPossibility.total -= 1;
                     }
-                    possibility.map[x, y] = false;
+                    atackerPossibility.map[x, y] = false;
+                }
+            }
+        }
+    }
+
+    private void processDamageImpact(List<Action> damageActions, int targetOldHealth, int targetNewHealth, List<Action> targetActions, PossiblePositions targetPossibility)
+    {
+        if (targetOldHealth != -1)
+        {
+            var surface = targetActions.Any(a => a.type == ActionType.surface);
+            var dif = targetNewHealth - targetOldHealth - (surface ? 1 : 0);
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    var shouldErase = false;
+                    if (damageActions.Count == 1)
+                    {
+                        if (dif == 2 && (x != damageActions[0].x || y != damageActions[0].y))
+                            shouldErase = true;
+                        else if (dif == 1 && (Math.Abs(x - damageActions[0].x) > 1 || Math.Abs(y - damageActions[0].y) > 1)) //hit, but it's too far
+                            shouldErase = true;
+                        else if(dif == 1 && x == damageActions[0].x && y == damageActions[0].y)//hit but not a direct center
+                            shouldErase = true;
+                        else if (dif == 0 && Math.Abs(x - damageActions[0].x) <=1 && Math.Abs(y - damageActions[0].y) <= 1) //didn't hit
+                            shouldErase = true;
+                    }
+                    else
+                    {
+                        if (dif == 4 && (x != damageActions[0].x || y != damageActions[0].y)) //double direct hit. should be the same spot
+                            shouldErase = true;
+                        else if (dif == 3 && (x != damageActions[0].x || y != damageActions[0].y) && (x != damageActions[1].x || y != damageActions[1].y)) // at least on direct hit, should be on the spot of 1 action
+                            shouldErase = true;
+                        else if(dif == 2 && (x != damageActions[0].x || y != damageActions[0].y) && (x != damageActions[1].x || y != damageActions[1].y))//not direct hit
+                                shouldErase = true;
+                        else if(dif == 2 && !(Math.Abs(x - damageActions[0].x) <= 1 && Math.Abs(y - damageActions[0].y) <= 1 && Math.Abs(x - damageActions[1].x) <= 1 && Math.Abs(y - damageActions[1].y) <= 1))//and not close to both shots simulteniously
+                                shouldErase = true;
+                        else if (dif == 1 && (Math.Abs(x - damageActions[0].x) > 1 || Math.Abs(y - damageActions[0].y) > 1) && (Math.Abs(x - damageActions[1].x) > 1 || Math.Abs(y - damageActions[1].y) > 1)) // not close to any
+                            shouldErase = true;
+                        else if (dif == 0 && (Math.Abs(x - damageActions[0].x) <= 1 && Math.Abs(y - damageActions[0].y) <= 1) && (Math.Abs(x - damageActions[1].x) <= 1 || Math.Abs(y - damageActions[1].y) <= 1)) // no hit, but it's close to some damage center
+                            shouldErase = true;
+                    }
+                    if (shouldErase)
+                    {
+                        if (targetPossibility.map[x, y])
+                        {
+                            targetPossibility.total -= 1;
+                        }
+                        targetPossibility.map[x, y] = false;
+                    }
                 }
             }
         }
@@ -328,13 +379,10 @@ public class Decider
                 processSurface(map.enemyPossibility, action, map.enemyPath, map.islands);
                 break;
             case ActionType.torpedo:
-                processTorped(map.islands, map.torpedo.reach, action, map.enemyPossibility);
+                processFireTorpedo(map.islands, map.torpedo.reach, action, map.enemyPossibility);
                 break;
             case ActionType.silence:
                 processSilence(action, map.reachSilence, map.enemyPossibility, map.islands, map.enemyPath);
-                break;
-            case ActionType.sonar:
-                processEnemySonar(map, action, me);
                 break;
         }
     }
@@ -370,28 +418,18 @@ public class Decider
         }
         return differentPossibleSectors > 1 ? result : (int?)null;
     }
-    private void processMySonar(Map map, Action action, Player enemy)
+    private void processMyMine(Map map, Action action, Player me)
+    {
+        map.myMines[action.x, action.y] = true;
+    }
+    private void processMySonar(Map map, Action action)
     {
         S.SectorToCoord(action.sector, out int minX, out int maxX, out int minY, out int maxY);
-        var lastOrder = enemy.previousOrders.Last();
-        var dX = 0;
-        var dY = 0;
-        var moveAction = lastOrder.actions.Find(a => a.type == ActionType.move);
-        if (moveAction != null)
-        {
-            dX = S.MoveX(moveAction.direction);
-            dY = S.MoveY(moveAction.direction);
-        }
-        var silenceUsed = lastOrder.actions.Any(a => a.type == ActionType.silence);
         if (action.result == false)
         {
-            if (silenceUsed)
+            for (int x = minX; x <= maxX; ++x)
             {
-                return;
-            }
-            for (int x = minX + dX; x <= maxX + dX; x++)
-            {
-                for (int y = minY + dY; y <= maxY + dY; y++)
+                for (int y = minY; y <= maxY; ++y)
                 {
                     if (!S.isOutOfBoundsOrIsland(map.islands, x, y) && map.enemyPossibility.map[x, y])
                     {
@@ -403,15 +441,11 @@ public class Decider
         }
         else
         {
-            var enemyMinX = minX + dX - (silenceUsed ? 4 : 0);
-            var enemyMaxX = maxX + dX + (silenceUsed ? 4 : 0);
-            var enemyMinY = minY + dY - (silenceUsed ? 4 : 0);
-            var enemyMaxY = maxY + dY + (silenceUsed ? 4 : 0);
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
                 {
-                    if (x < enemyMinX || x > enemyMaxX || y < enemyMinY || y > enemyMaxY)
+                    if (x < minX || x > maxX || y < minY || y > maxY)
                     {
                         if (map.enemyPossibility.map[x, y])
                         {
@@ -435,14 +469,14 @@ public class Decider
                 clearMyVisitedPlace(map.visited, me.x, me.y);
                 break;
             case ActionType.torpedo:
-                processTorped(map.islands, map.torpedo.reach, action, map.mePossibility);
+                processFireTorpedo(map.islands, map.torpedo.reach, action, map.mePossibility);
                 break;
             case ActionType.silence:
                 processSilence(action, map.reachSilence, map.mePossibility, map.islands, map.myPath);
                 fillVisitedOnMySilence(map.visited, me.x, me.y, action);
                 break;
-            case ActionType.sonar:
-                processMySonar(map, action, enemy);
+            case ActionType.mine:
+                //processMine(action, map.reachSilence, map.mePossibility, map.islands, map.myPath);
                 break;
         }
     }
@@ -452,26 +486,28 @@ public class Decider
             return Ability.TORPEDO;
         if (map.enemyPossibility.total > 50 && me.sonarCooldown > 0)
             return Ability.SONAR;
-        if (me.mineCooldown > 0)
-            return Ability.MINE;
         if (me.silenceCooldown > 0)
             return Ability.SILENCE;
         if (me.torpedoCooldown > 0)
             return Ability.TORPEDO;
         if (me.sonarCooldown > 0)
             return Ability.SONAR;
+        if (me.mineCooldown > 0)
+            return Ability.MINE;
         return Ability.TORPEDO;
     }
     public Order Decide(Map map, Player me, Player enemy)
     {
-        if (me.previousOrders.Count > 0)
-        {
-            me.previousOrders.Last().actions.ForEach(a => processMyAction(map, a, me, enemy));
-        }
-        if (enemy.previousOrders.Count > 0)
-        {
-            enemy.previousOrders.Last().actions.ForEach(a => processEnemyAction(map, a, me));
-        }
+        me.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.sonar).ToList().ForEach(a => processMySonar(map, a));
+        enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.sonar).ToList().ForEach(a => processEnemySonar(map, a, me));
+        var myDamageActions = me.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.trigger || a.type == ActionType.torpedo).ToList();
+        if (myDamageActions != null && myDamageActions.Count > 0)
+            processDamageImpact(myDamageActions, enemy.previousHealth, enemy.health, enemy.previousOrders.Last().actions, map.enemyPossibility);
+        var enemyDamageActions = enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.trigger || a.type == ActionType.torpedo).ToList();
+        me.previousOrders.LastOrDefault()?.actions.Where(a => a.type != ActionType.sonar).ToList().ForEach(a => processMyAction(map, a, me, enemy));
+        if (enemyDamageActions != null && enemyDamageActions.Count > 0)
+            processDamageImpact(enemyDamageActions, me.previousHealth, me.health, me.previousOrders.Last().actions, map.mePossibility);
+        enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type != ActionType.sonar).ToList().ForEach(a => processEnemyAction(map, a, me));
         map.visited[me.x, me.y] = true;
         var result = new Order();
         var addedActionInCycle = true;
@@ -479,8 +515,13 @@ public class Decider
         var surfaces = false;
         var torpeded = false;
         var silenced = false;
-        var mined = false;
+        var minedOrTriggered = false;
         var soned = false;
+        var noCDs = me.torpedoCooldown == 0 && me.sonarCooldown == 0 && me.silenceCooldown == 0 && me.mineCooldown == 0;
+        if (map.enemyPossibility.total < 1)
+            Console.Error.WriteLine("ERROR enemy possibility is less than 1");
+        if (map.mePossibility.map[me.x, me.y] == false)
+            Console.Error.WriteLine("ERROR I'm inprobable");
 
         while (addedActionInCycle)
         {
@@ -499,7 +540,7 @@ public class Decider
                     soned = true;
                 }
             }
-            if (!addedActionInCycle && map.mePossibility.total < 40 && me.silenceCooldown == 0 && !silenced)
+            if (!addedActionInCycle && (map.mePossibility.total < 40 || noCDs) && me.silenceCooldown == 0 && !silenced)
             {
                 var action = findBestSilencePlace(map, me);
                 if (action != null)

@@ -24,7 +24,7 @@ namespace UnitTestProject
             var divider = version > 0 ? 4 : 3;
             var cycleInput = lines.Skip(17).Select((value, index) => new { PairNum = index / divider, value })
    .GroupBy(pair => pair.PairNum)
-   .Select(grp => String.Join('\n', grp.Select(g => g.value))).ToList();
+   .Select(grp => String.Join('\n', grp.Take(3).Select(g => g.value))).ToList();
             return ProcessGame(islandMap, cycleInput, seed);
         }
 
@@ -346,6 +346,38 @@ MOVE N"
             var output = ProcessInputsBulk(text);
             //Assert.IsTrue(program.map.enemyPossibility.total > 0);
             Assert.IsTrue(!output.Last().StartsWith("MOVE N"));
+        }
+
+        [TestMethod]
+        public void Should_have_positive_enemy_probability()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../HalfGame3.txt");
+            var output = ProcessInputsBulk(text, 1);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+        }
+
+        [TestMethod]
+        public void Should_reduce_probability_on_enemy_fire()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../HalfGame4.txt");
+            var output = ProcessInputsBulk(text, 1);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+        }
+
+        [TestMethod]
+        public void Should_have_positive_enemy_probability2()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../HalfGame5.txt");
+            var output = ProcessInputsBulk(text, 1);
+            Assert.IsTrue(program.map.enemyPossibility.total > 0);
+        }
+
+        [TestMethod]
+        public void Should_have_positive_my_probability3()
+        {
+            string text = System.IO.File.ReadAllText(@"./../../../HalfGame6.txt");
+            var output = ProcessInputsBulk(text, 1);
+            Assert.IsTrue(program.map.mePossibility.total > 0);
         }
     }
 }

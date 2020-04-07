@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.IO;
-using System.Text;
-using System.Collections;
 using System.Collections.Generic;
 
 public class Program
@@ -91,7 +88,7 @@ public class Program
         return decider.FindStartingSpot(map);
     }
 
-    public Player me = new Player();
+    public Player me = new Player() { previousHealth = -1 };
     public Player enemy = new Player();
     public Decider decider;
     public Map map = new Map();
@@ -111,11 +108,13 @@ public class Program
         string opponentOrders = fromConsole[2];
         me.x = x;
         me.y = y;
+        me.previousHealth = me.health;
         me.health = myLife;
         me.sonarCooldown = sonarCooldown;
         me.silenceCooldown = silenceCooldown;
         me.mineCooldown = mineCooldown;
         me.torpedoCooldown = torpedoCooldown;
+        enemy.previousHealth = enemy.health;
         enemy.health = oppLife;
         if (sonarResult == "Y" || sonarResult == "N")
         {

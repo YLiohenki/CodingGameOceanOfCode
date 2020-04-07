@@ -6,6 +6,7 @@ using System.Text;
 public class Player
 {
     public int health;
+    public int previousHealth;
     public int x;
     public int y;
     public int torpedoCooldown;
@@ -51,6 +52,8 @@ public class Map
     public bool[,] visited;
     public bool[,] reachSilence;
     public int[,] paint;
+    public bool[,] myMines;
+    public double[,] enemyMines;
 
     public string[] getMap(string prop)
     {
