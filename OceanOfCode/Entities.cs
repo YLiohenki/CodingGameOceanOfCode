@@ -29,7 +29,7 @@ public class PossiblePositions
 }
 public class PathMark
 {
-    public bool mine = false;
+    public Mine mine = null;
     public bool silenceIn = false;
     public bool silenceOut = false;
     public bool visited = false;
@@ -41,14 +41,20 @@ public class PathMark
     }
 }
 
+public class Point
+{
+    public Point(int _x, int _y)
+    {
+        x = _x;
+        y = _y;
+    }
+    public int x;
+    public int y;
+}
+
 public class Minefield
 {
-    public class Mine
-    {
-        public int x;
-        public int y;
-    }
-    public List<Mine> mines = new List<Mine>();
+    public List<Point> mines = new List<Point>();
     public bool[,] map;
 }
 public class TorpedoPosition
@@ -70,37 +76,50 @@ public enum VisitedState
     fresh = 1,
     old = 2
 }
+
+public class Mine
+{
+    public int totalSpaceOccupied;
+}
+
+public class ProbableMines
+{
+    public double[,] probability;
+    public List<Mine>[,] mapList;
+}
 public class Map
 {
     public int height, width;
     public PossiblePositions enemyPossibility = new PossiblePositions();
-    public PossiblePositions mePossibility = new PossiblePositions();
+    public List<PossiblePositions> enemyPossibilityHistory = new List<PossiblePositions>();
+    public PossiblePositions myPossibility = new PossiblePositions();
+    public List<PossiblePositions> myPossibilityHistory = new List<PossiblePositions>();
     public TorpedoPosition torpedo = new TorpedoPosition();
     public bool[,] islands;
-    public List<int[]> islandsList;
+    public List<Point> islandsList;
     public double[,] probablyDamage;
     public PathMark[,] enemyPath;
     public PathMark[,] myPath;
+    public bool[,] visited;
+    public VisitedState[,] enemyDerivedVisited;
+    public VisitedState[,] myDerivedVisited;
+    public bool[,] reachSilence;
+    public int[,] paint;
+    public ProbableMines myProbableMines = new ProbableMines();
+    public ProbableMines enemyProbableMines = new ProbableMines();
+    public Minefield myMinefield = new Minefield();
     public PathMark[,] ClonePath(PathMark[,] path)
     {
-        var result = new PathMark[29, 29];
-        for (int x = 0; x < 29; ++x)
+        var result = new PathMark[path.GetLength(0), path.GetLength(1)];
+        for (int x = 0; x < path.GetLength(0); ++x)
         {
-            for (int y = 0; y < 29; y++)
+            for (int y = 0; y < path.GetLength(1); y++)
             {
                 result[x, y] = path[x, y].Clone();
             }
         }
         return result;
     }
-    public bool[,] visited;
-    public VisitedState[,] enemyDerivedVisited;
-    public VisitedState[,] myDerivedVisited;
-    public bool[,] reachSilence;
-    public int[,] paint;
-    public bool[,] myMines;
-    public double[,] enemyMines;
-    public Minefield myMinefield = new Minefield();
 
     public string[] getMap(string prop)
     {
@@ -115,7 +134,7 @@ public class Map
                     if (prop == "enemyPossibility")
                         line += enemyPossibility.map[j, i] == true ? 'x' : '-';
                     else if (prop == "mePossibility")
-                        line += mePossibility.map[j, i] == true ? 'x' : '-';
+                        line += myPossibility.map[j, i] == true ? 'x' : '-';
                     else if (prop == "visited")
                         line += visited[j, i] == true ? 'x' : '-';
                     else if (prop == "islands")

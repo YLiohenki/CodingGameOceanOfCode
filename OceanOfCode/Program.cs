@@ -52,16 +52,20 @@ public class Program
         map.reachSilence = new bool[width, height];
         map.visited = new bool[width, height];
         map.enemyPossibility.map = new bool[width, height];
-        map.mePossibility.map = new bool[width, height];
+        map.myPossibility.map = new bool[width, height];
         map.torpedo.toReach = new int[width, height];
         map.torpedo.fromReach = new int[width, height];
-        map.islandsList = new List<int[]>();
+        map.islandsList = new List<Point>();
         map.paint = new int[width, height];
         map.enemyPossibility.total = 0;
-        map.mePossibility.total = 0;
+        map.myPossibility.total = 0;
         map.myDerivedVisited = new VisitedState[width, height];
         map.enemyDerivedVisited = new VisitedState[width, height];
         map.myMinefield.map = new bool[width, height];
+        map.myProbableMines.probability = new double[width, height];
+        map.myProbableMines.mapList = new List<Mine>[width, height];
+        map.enemyProbableMines.probability = new double[width, height];
+        map.enemyProbableMines.mapList = new List<Mine>[width, height];
 
         map.enemyPath = new PathMark[width * 2 - 1, height * 2 - 1];
         map.myPath = new PathMark[width * 2 - 1, height * 2 - 1];
@@ -85,12 +89,14 @@ public class Program
                 map.islands[x, y] = isIsland;
                 map.enemyPossibility.map[x, y] = !isIsland;
                 map.enemyPossibility.total += isIsland ? 0 : 1;
-                map.mePossibility.map[x, y] = !isIsland;
-                map.mePossibility.total += isIsland ? 0 : 1;
+                map.myPossibility.map[x, y] = !isIsland;
+                map.myPossibility.total += isIsland ? 0 : 1;
                 if (isIsland)
                 {
-                    map.islandsList.Add(new int[] { x , y });
+                    map.islandsList.Add(new Point(x, y));
                 }
+                map.myProbableMines.mapList[x, y] = new List<Mine>();
+                map.enemyProbableMines.mapList[x, y] = new List<Mine>();
             }
         }
 

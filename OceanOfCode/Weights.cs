@@ -9,4 +9,8 @@
     public double torpedoFireThreshold = 0.66;
     public double torpedoDecreaseMyPossibilityFine = 0.5;
     public double triggerMineThreshold = 0.25;
+
+    public double mineToMinePushForce = 2;
+    public double islandToMinePushForce = 1;
+    public double borderToMinePushForce = 0.5;
 }
