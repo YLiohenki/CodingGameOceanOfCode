@@ -11,12 +11,77 @@ public class Decider
         this.width = _width;
         S = new S(width, height);
         W = new W();
+        E = new Evaluator(width, height);
     }
     private Random rand;
     private int height;
     private int width;
     private S S;
     private W W;
+    private Evaluator E;
+
+    public Action findBestMinePlacement(Map map, Player me)
+    {
+        Action result = null;
+        var minMinePushAwayForce = double.MaxValue;
+        foreach (var dir in S.possibleDirections)
+        {
+            var x = me.x + S.MoveX(dir);
+            var y = me.y + S.MoveY(dir);
+            if (!S.isOutOfBoundsOrIsland(map.islands, x, y))
+            {
+                var pushForce = 0.0;
+                map.myMinefield.mines.ForEach(mine =>
+                {
+                    pushForce += 1.0 / Math.Sqrt((x - mine.x) * (x - mine.x) + (y - mine.y) * (y - mine.y));
+                });
+                if (x == 0)
+                    pushForce += 0.5;
+                if (y == 0)
+                    pushForce += 0.5;
+                if (pushForce < minMinePushAwayForce) {
+                    minMinePushAwayForce = pushForce;
+                    result = new Action() { type = ActionType.mine, direction = dir, x = x, y = y };
+                }
+            }
+        }
+        return result;
+    }
+    public Action findBestMineTrigger(Map map, Player me)
+    {
+        Action result = null;
+        var maxDamage = 0.0;
+        map.myMinefield.mines.ForEach((mine) =>
+        {
+            var totalEnemyDamage = 0.0;
+            foreach (var adj in S.adjustedCells)
+            {
+                if (!S.isOutOfBoundsOrIsland(map.islands, mine.x + adj[0], mine.y + adj[1]) && map.enemyPossibility.map[mine.x + adj[0], mine.y + adj[1]])
+                {
+                    totalEnemyDamage += 1.0 / map.enemyPossibility.total;
+                }
+            }
+            if (map.enemyPossibility.map[mine.x, mine.y])
+            {
+                totalEnemyDamage += 2.0 / map.enemyPossibility.total;
+            }
+            var myDamage = 0.0;
+            if (me.x == mine.x && me.y == mine.y)
+            {
+                myDamage += 2;
+            }
+            else if (Math.Abs(mine.x - me.x) <= 1 && Math.Abs(mine.y - me.y) <= 1)
+            {
+                myDamage += 1;
+            }
+            if (totalEnemyDamage - myDamage > W.triggerMineThreshold && totalEnemyDamage - myDamage > maxDamage)
+            {
+                result = new Action() { type = ActionType.trigger, x = mine.x, y = mine.y };
+                maxDamage = totalEnemyDamage - myDamage;
+            }
+        });
+        return result;
+    }
 
     public void fillPossibleTorpedoes(Map map, Player me)
     {
@@ -24,18 +89,19 @@ public class Decider
         {
             for (int j = 0; j < map.height; j++)
             {
-                map.torpedo.reach[i, j] = 0;
+                map.torpedo.toReach[i, j] = 0;
             }
         }
         map.torpedo.canReach = false;
+        map.torpedo.evalFire = 0;
         fillPossibleTorpedoesRecurs(map, me.x, me.y, 5, me);
     }
 
     public void fillPossibleTorpedoesRecurs(Map map, int x, int y, int step, Player me)
     {
-        if (S.isOutOfBoundsOrIsland(map.islands, x, y) || step <= 0 || map.torpedo.reach[x, y] >= step)
+        if (S.isOutOfBoundsOrIsland(map.islands, x, y) || step <= 0 || map.torpedo.toReach[x, y] >= step)
             return;
-        map.torpedo.reach[x, y] = step;
+        map.torpedo.toReach[x, y] = step;
         var totalEnemyDamage = 0.0;
         foreach (var adj in S.adjustedCells)
         {
@@ -57,13 +123,23 @@ public class Decider
         {
             myDamage += 1;
         }
-        if (totalEnemyDamage - myDamage >= W.torpedoFireThreshold && totalEnemyDamage - myDamage >= map.torpedo.enemyExpectedDamage - map.torpedo.myDamage)
+        if (totalEnemyDamage - myDamage >= W.torpedoCalculationThreshold)
         {
-            map.torpedo.canReach = true;
-            map.torpedo.x = x;
-            map.torpedo.y = y;
-            map.torpedo.enemyExpectedDamage = totalEnemyDamage;
-            map.torpedo.myDamage = myDamage;
+            var myNewpossibility = map.mePossibility.Clone();
+            processFireTorpedo(map.islands, map.torpedo.fromReach, new Action()
+            { type = ActionType.torpedo, x = map.torpedo.x, y = map.torpedo.y }, myNewpossibility);
+            var evalFire = E.EvaluateTorpedoFire(totalEnemyDamage, myDamage, map.mePossibility.total, myNewpossibility.total);
+            if (evalFire >= W.torpedoFireThreshold && evalFire >= map.torpedo.evalFire)
+            {
+                map.torpedo.evalFire = evalFire;
+                map.torpedo.canReach = true;
+                map.torpedo.x = x;
+                map.torpedo.y = y;
+                map.torpedo.enemyExpectedDamage = totalEnemyDamage;
+                map.torpedo.myDamage = myDamage;
+                map.torpedo.oldProssibility = map.mePossibility.total;
+                map.torpedo.newProssibility = myNewpossibility.total;
+            }
         }
         fillPossibleTorpedoesRecurs(map, x, y - 1, step - 1, me);
         fillPossibleTorpedoesRecurs(map, x - 1, y, step - 1, me);
@@ -83,7 +159,7 @@ public class Decider
         visited[x, y] = true;
     }
 
-    private void fillPossiblePositionOnMove(PossiblePositions possibility, Action action, bool[,] islands)
+    private void fillPossiblePositionOnMove(PossiblePositions possibility, Action action, bool[,] islands, VisitedState[,] derivedVisisted)
     {
         var dX = -S.MoveX(action.direction);
         var dY = -S.MoveY(action.direction);
@@ -109,22 +185,25 @@ public class Decider
                 {
                     possibility.map[x, y] = possibility.map[x + dX, y + dY];
                 }
+                if (derivedVisisted[x, y] == VisitedState.fresh)
+                    derivedVisisted[x, y] = VisitedState.old;
             }
         }
     }
 
-    private void processMove(PossiblePositions possibility, Action action, bool[,] islands, bool[,] recordedPath)
+    private void processMove(PossiblePositions possibility, Action action, bool[,] islands, PathMark[,] recordedPath, VisitedState[,] derivedVisisted)
     {
-        fillPossiblePositionOnMove(possibility, action, islands);
+        fillPossiblePositionOnMove(possibility, action, islands, derivedVisisted);
         var dX = S.MoveX(action.direction);
         var dY = S.MoveY(action.direction);
-        for (int x = dX >= 0 ? 0 : width * 2 - 2; dX >= 0 ? x < width * 2 - 1 : x >= 0; x += (dX >= 0 ? 1 : -1))
+        for (int x = dX >= 0 ? 0 : S.pathWidth - 1; dX >= 0 ? x < S.pathWidth : x >= 0; x += (dX >= 0 ? 1 : -1))
         {
-            for (int y = dY >= 0 ? 0 : height * 2 - 2; dY >= 0 ? y < height * 2 - 1 : y >= 0; y += (dY >= 0 ? 1 : -1))
+            for (int y = dY >= 0 ? 0 : S.pathHeight - 1; dY >= 0 ? y < S.pathHeight : y >= 0; y += (dY >= 0 ? 1 : -1))
             {
-                if (x + dX < 0 || x + dX >= height * 2 - 1 || y + dY < 0 || y + dY >= height * 2 - 1)
+                if (x + dX < 0 || x + dX >= S.pathWidth - 1 || y + dY < 0 || y + dY >= S.pathHeight - 1)
                 {
-                    recordedPath[x, y] = false;
+                    recordedPath[x, y].visited = false;
+                    recordedPath[x, y].processed = false;
                 }
                 else
                 {
@@ -132,7 +211,8 @@ public class Decider
                 }
             }
         }
-        recordedPath[width - 1, height - 1] = true;
+        recordedPath[width - 1, height - 1].visited = true;
+        recordedPath[width - 1, height - 1].processed = false;
     }
 
     private void processFireTorpedo(bool[,] islands, int[,] reachTorpedo, Action action, PossiblePositions atackerPossibility)
@@ -179,9 +259,9 @@ public class Decider
                             shouldErase = true;
                         else if (dif == 1 && (Math.Abs(x - damageActions[0].x) > 1 || Math.Abs(y - damageActions[0].y) > 1)) //hit, but it's too far
                             shouldErase = true;
-                        else if(dif == 1 && x == damageActions[0].x && y == damageActions[0].y)//hit but not a direct center
+                        else if (dif == 1 && x == damageActions[0].x && y == damageActions[0].y)//hit but not a direct center
                             shouldErase = true;
-                        else if (dif == 0 && Math.Abs(x - damageActions[0].x) <=1 && Math.Abs(y - damageActions[0].y) <= 1) //didn't hit
+                        else if (dif == 0 && Math.Abs(x - damageActions[0].x) <= 1 && Math.Abs(y - damageActions[0].y) <= 1) //didn't hit
                             shouldErase = true;
                     }
                     else
@@ -190,10 +270,10 @@ public class Decider
                             shouldErase = true;
                         else if (dif == 3 && (x != damageActions[0].x || y != damageActions[0].y) && (x != damageActions[1].x || y != damageActions[1].y)) // at least on direct hit, should be on the spot of 1 action
                             shouldErase = true;
-                        else if(dif == 2 && (x != damageActions[0].x || y != damageActions[0].y) && (x != damageActions[1].x || y != damageActions[1].y))//not direct hit
-                                shouldErase = true;
-                        else if(dif == 2 && !(Math.Abs(x - damageActions[0].x) <= 1 && Math.Abs(y - damageActions[0].y) <= 1 && Math.Abs(x - damageActions[1].x) <= 1 && Math.Abs(y - damageActions[1].y) <= 1))//and not close to both shots simulteniously
-                                shouldErase = true;
+                        else if (dif == 2 && (x != damageActions[0].x || y != damageActions[0].y) && (x != damageActions[1].x || y != damageActions[1].y))//not direct hit
+                            shouldErase = true;
+                        else if (dif == 2 && !(Math.Abs(x - damageActions[0].x) <= 1 && Math.Abs(y - damageActions[0].y) <= 1 && Math.Abs(x - damageActions[1].x) <= 1 && Math.Abs(y - damageActions[1].y) <= 1))//and not close to both shots simulteniously
+                            shouldErase = true;
                         else if (dif == 1 && (Math.Abs(x - damageActions[0].x) > 1 || Math.Abs(y - damageActions[0].y) > 1) && (Math.Abs(x - damageActions[1].x) > 1 || Math.Abs(y - damageActions[1].y) > 1)) // not close to any
                             shouldErase = true;
                         else if (dif == 0 && (Math.Abs(x - damageActions[0].x) <= 1 && Math.Abs(y - damageActions[0].y) <= 1) && (Math.Abs(x - damageActions[1].x) <= 1 || Math.Abs(y - damageActions[1].y) <= 1)) // no hit, but it's close to some damage center
@@ -224,7 +304,7 @@ public class Decider
     }
 
 
-    public void processSurface(PossiblePositions posibility, Action action, bool[,] recordedPath, bool[,] islands)
+    public void processSurface(PossiblePositions posibility, Action action, PathMark[,] recordedPath, bool[,] islands, VisitedState[,] derivedPath)
     {
         posibility.total = 0;
         S.SectorToCoord(action.sector, out int minX, out int maxX, out int minY, out int maxY);
@@ -240,6 +320,7 @@ public class Decider
                 {
                     posibility.total += 1;
                 }
+                derivedPath[x, y] = VisitedState.unknow;
             }
         }
         S.EraseRecordedPath(recordedPath);
@@ -253,7 +334,17 @@ public class Decider
             visited[x + k * dX, y + k * dY] = true;
         }
     }
-    public void processSilence(Action action, bool[,] reachSilence, PossiblePositions possibility, bool[,] islands, bool[,] recordedPath)
+    public void processMyMine(Action action, Map map) {
+        map.myMinefield.map[action.x, action.y] = true;
+        map.myMinefield.mines.Add(new Minefield.Mine() { x = action.x, y = action.y });
+    }
+    public void processMyTrigger(Action action, Map map)
+    {
+        map.myMinefield.map[action.x, action.y] = false;
+        map.myMinefield.mines = map.myMinefield.mines.Where(m => !(m.x == action.x && m.y == action.y)).ToList();
+    }
+    
+    public void processSilence(Action action, bool[,] reachSilence, PossiblePositions possibility, bool[,] islands, PathMark[,] recordedPath)
     {
         for (int x = 0; x < width; x++)
         {
@@ -275,7 +366,7 @@ public class Decider
                         var dY = S.MoveY(dir);
                         for (int k = 1; k <= 4; k++)
                         {
-                            if (S.isOutOfBoundsOrIsland(islands, x + dX * k, y + dY * k) || recordedPath[S.enemyPathCenterX + dX * k, S.enemyPathCenterY + dY * k])
+                            if (S.isOutOfBoundsOrIsland(islands, x + dX * k, y + dY * k) || recordedPath[S.pathCenterX + dX * k, S.pathCenterY + dY * k].visited)
                             {
                                 break;
                             }
@@ -373,13 +464,13 @@ public class Decider
         switch (action.type)
         {
             case ActionType.move:
-                processMove(map.enemyPossibility, action, map.islands, map.enemyPath);
+                processMove(map.enemyPossibility, action, map.islands, map.enemyPath, map.enemyDerivedVisited);
                 break;
             case ActionType.surface:
-                processSurface(map.enemyPossibility, action, map.enemyPath, map.islands);
+                processSurface(map.enemyPossibility, action, map.enemyPath, map.islands, map.enemyDerivedVisited);
                 break;
             case ActionType.torpedo:
-                processFireTorpedo(map.islands, map.torpedo.reach, action, map.enemyPossibility);
+                processFireTorpedo(map.islands, map.torpedo.fromReach, action, map.enemyPossibility);
                 break;
             case ActionType.silence:
                 processSilence(action, map.reachSilence, map.enemyPossibility, map.islands, map.enemyPath);
@@ -417,10 +508,6 @@ public class Decider
             }
         }
         return differentPossibleSectors > 1 ? result : (int?)null;
-    }
-    private void processMyMine(Map map, Action action, Player me)
-    {
-        map.myMines[action.x, action.y] = true;
     }
     private void processMySonar(Map map, Action action)
     {
@@ -462,21 +549,24 @@ public class Decider
         switch (action.type)
         {
             case ActionType.move:
-                processMove(map.mePossibility, action, map.islands, map.myPath);
+                processMove(map.mePossibility, action, map.islands, map.myPath, map.myDerivedVisited);
                 break;
             case ActionType.surface:
-                processSurface(map.mePossibility, action, map.myPath, map.islands);
+                processSurface(map.mePossibility, action, map.myPath, map.islands, map.myDerivedVisited);
                 clearMyVisitedPlace(map.visited, me.x, me.y);
                 break;
             case ActionType.torpedo:
-                processFireTorpedo(map.islands, map.torpedo.reach, action, map.mePossibility);
+                processFireTorpedo(map.islands, map.torpedo.fromReach, action, map.mePossibility);
                 break;
             case ActionType.silence:
                 processSilence(action, map.reachSilence, map.mePossibility, map.islands, map.myPath);
                 fillVisitedOnMySilence(map.visited, me.x, me.y, action);
                 break;
             case ActionType.mine:
-                //processMine(action, map.reachSilence, map.mePossibility, map.islands, map.myPath);
+                processMyMine(action, map);
+                break;
+            case ActionType.trigger:
+                processMyTrigger(action, map);
                 break;
         }
     }
@@ -488,27 +578,102 @@ public class Decider
             return Ability.SONAR;
         if (me.silenceCooldown > 0)
             return Ability.SILENCE;
+        if (me.mineCooldown > 0)
+            return Ability.MINE;
         if (me.torpedoCooldown > 0)
             return Ability.TORPEDO;
         if (me.sonarCooldown > 0)
             return Ability.SONAR;
-        if (me.mineCooldown > 0)
-            return Ability.MINE;
         return Ability.TORPEDO;
+    }
+    public void CheckNoPossibilityOverVisited(VisitedState[,] derivedVisited, PossiblePositions possibility)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (derivedVisited[x, y] == VisitedState.old && possibility.map[x, y])
+                {
+                    possibility.total--;
+                    possibility.map[x, y] = false;
+                }
+            }
+        }
     }
     public Order Decide(Map map, Player me, Player enemy)
     {
+        //my actions first
         me.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.sonar).ToList().ForEach(a => processMySonar(map, a));
-        enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.sonar).ToList().ForEach(a => processEnemySonar(map, a, me));
         var myDamageActions = me.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.trigger || a.type == ActionType.torpedo).ToList();
         if (myDamageActions != null && myDamageActions.Count > 0)
             processDamageImpact(myDamageActions, enemy.previousHealth, enemy.health, enemy.previousOrders.Last().actions, map.enemyPossibility);
-        var enemyDamageActions = enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.trigger || a.type == ActionType.torpedo).ToList();
         me.previousOrders.LastOrDefault()?.actions.Where(a => a.type != ActionType.sonar).ToList().ForEach(a => processMyAction(map, a, me, enemy));
+
+        //enemy actions second
+        enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.sonar).ToList().ForEach(a => processEnemySonar(map, a, me));
+        var enemyDamageActions = enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type == ActionType.trigger || a.type == ActionType.torpedo).ToList();
         if (enemyDamageActions != null && enemyDamageActions.Count > 0)
             processDamageImpact(enemyDamageActions, me.previousHealth, me.health, me.previousOrders.Last().actions, map.mePossibility);
         enemy.previousOrders.LastOrDefault()?.actions.Where(a => a.type != ActionType.sonar).ToList().ForEach(a => processEnemyAction(map, a, me));
+
         map.visited[me.x, me.y] = true;
+        if (map.enemyPossibility.total < 1)
+            Console.Error.WriteLine("ERROR enemy possibility is less than 1");
+        if (map.mePossibility.map[me.x, me.y] == false)
+            Console.Error.WriteLine("ERROR I'm inprobable");
+        if (map.mePossibility.total == 1)
+            MarkVisitedPath(map.myDerivedVisited, map.myPath, map.mePossibility);
+        if (map.enemyPossibility.total == 1)
+            MarkVisitedPath(map.enemyDerivedVisited, map.enemyPath, map.enemyPossibility);
+        CheckNoPossibilityOverVisited(map.myDerivedVisited, map.mePossibility);
+        CheckNoPossibilityOverVisited(map.enemyDerivedVisited, map.enemyPossibility);
+
+        var result = decideOnNextActions(map, me, enemy);
+        return result;
+    }
+
+    private void MarkVisitedPath(VisitedState[,] possibleVisited, PathMark[,] path, PossiblePositions possibility)
+    {
+        var targetX = 0;
+        var targetY = 0;
+        var found = false;
+        for (int x = 0; x < height && !found; x++)
+        {
+            for (int y = 0; y < width && !found; y++)
+            {
+                if (possibility.map[x, y])
+                {
+                    targetX = x;
+                    targetY = y;
+                    found = true;
+                }
+            }
+        }
+        MarkVisitedPathRecurs(possibleVisited, path, targetX, targetY, 0, 0);
+        possibleVisited[targetX, targetY] = VisitedState.fresh;
+    }
+
+    public void MarkVisitedPathRecurs(VisitedState[,] possibleVisited, PathMark[,] path, int x, int y, int dX, int dY)
+    {
+        if (S.pathCenterX + dX < 0
+            || S.pathCenterY + dY < 0
+            || S.pathCenterX + dX >= S.pathWidth
+            || S.pathCenterY + dY >= S.pathHeight
+            || path[S.pathCenterX + dX, S.pathCenterY + dY].processed
+            || !path[S.pathCenterX + dX, S.pathCenterY + dY].visited)
+        {
+            return;
+        }
+        path[S.pathCenterX + dX, S.pathCenterY + dY].processed = true;
+        possibleVisited[x + dX, y + dY] = VisitedState.old;
+        MarkVisitedPathRecurs(possibleVisited, path, x, y, dX + 1, dY);
+        MarkVisitedPathRecurs(possibleVisited, path, x, y, dX - 1, dY);
+        MarkVisitedPathRecurs(possibleVisited, path, x, y, dX, dY + 1);
+        MarkVisitedPathRecurs(possibleVisited, path, x, y, dX, dY - 1);
+    }
+
+    private Order decideOnNextActions(Map map, Player me, Player enemy)
+    {
         var result = new Order();
         var addedActionInCycle = true;
         var moved = false;
@@ -518,11 +683,6 @@ public class Decider
         var minedOrTriggered = false;
         var soned = false;
         var noCDs = me.torpedoCooldown == 0 && me.sonarCooldown == 0 && me.silenceCooldown == 0 && me.mineCooldown == 0;
-        if (map.enemyPossibility.total < 1)
-            Console.Error.WriteLine("ERROR enemy possibility is less than 1");
-        if (map.mePossibility.map[me.x, me.y] == false)
-            Console.Error.WriteLine("ERROR I'm inprobable");
-
         while (addedActionInCycle)
         {
             addedActionInCycle = false;
@@ -565,6 +725,29 @@ public class Decider
                     torpeded = true;
                 }
             }
+            if (!addedActionInCycle && !minedOrTriggered && (me.mineCooldown == 0 || map.myMinefield.mines.Count > 0))
+            {
+                if (map.myMinefield.mines.Count > 0)
+                {
+                    var action = this.findBestMineTrigger(map, me);
+                    if (action != null)
+                    {
+                        result.actions.Add(action);
+                        addedActionInCycle = true;
+                        minedOrTriggered = true;
+                    }
+                }
+                if (!minedOrTriggered && me.mineCooldown == 0)
+                {
+                    var action = this.findBestMinePlacement(map, me);
+                    if (action != null)
+                    {
+                        result.actions.Add(action);
+                        addedActionInCycle = true;
+                        minedOrTriggered = true;
+                    }
+                }
+            }
             if (!addedActionInCycle && !moved)
             {
                 var action = this.findMoveDirection(map, me);
@@ -576,7 +759,7 @@ public class Decider
                     moved = true;
                 }
             }
-            if (!addedActionInCycle && !surfaces && !moved && !silenced && !torpeded && !soned)
+            if (!addedActionInCycle && !surfaces && !moved && !silenced && !torpeded && !soned && !minedOrTriggered)
             {
                 surfaces = true;
                 addedActionInCycle = true;
@@ -633,7 +816,7 @@ public class Decider
             currentWay[1] = dir;
             if (!S.isOutOfBoundsOrIsland(map.islands, me.x + S.MoveX(dir), me.y + S.MoveY(dir)) && !map.visited[me.x + S.MoveX(dir), me.y + S.MoveY(dir)])
             {
-                var currentMaxCells = findMoveDirectionRecurs(map.islands, map.paint, me.x + S.MoveX(dir), me.y + S.MoveY(dir), visitedList, possibilityList, steps, 1, ref currentWay);
+                var currentMaxCells = findMoveDirectionRecurs(map.islands, map.paint, me.x + S.MoveX(dir), me.y + S.MoveY(dir), visitedList, map.ClonePath(map.myPath), possibilityList, steps, 1, ref currentWay, map.myDerivedVisited.Clone() as VisitedState[,]);
                 if (currentMaxCells > maxPossibileCells)
                 {
                     maxPossibileCells = currentMaxCells;
@@ -644,7 +827,7 @@ public class Decider
         return result;
     }
 
-    private double findMoveDirectionRecurs(bool[,] islands, int[,] paint, int x, int y, List<bool[,]> visitedList, List<PossiblePositions> possibilityList, int maxDepth, int currentStep, ref char[] currentWay)
+    private double findMoveDirectionRecurs(bool[,] islands, int[,] paint, int x, int y, List<bool[,]> visitedList, PathMark[,] path, List<PossiblePositions> possibilityList, int maxDepth, int currentStep, ref char[] currentWay, VisitedState[,] derivedVisited)
     {
         if (S.isOutOfBoundsOrIsland(islands, x, y))
         {
@@ -679,7 +862,7 @@ public class Decider
         }
         visitedMap[x, y] = true;
         var dir = currentWay[currentStep];
-        fillPossiblePositionOnMove(possibility, new Action() { direction = dir, type = ActionType.move }, islands);
+        fillPossiblePositionOnMove(possibility, new Action() { direction = dir, type = ActionType.move }, islands, derivedVisited);
         if (currentStep <= maxDepth)
         {
             var maxPossibility = double.MinValue;
@@ -688,7 +871,7 @@ public class Decider
             foreach (var newDir in S.possibleDirections)
             {
                 currentWay[currentStep + 1] = newDir;
-                var newPossibility = findMoveDirectionRecurs(islands, paint, x + S.MoveX(newDir), y + S.MoveY(newDir), visitedList, possibilityList, maxDepth, currentStep + 1, ref currentWay);
+                var newPossibility = findMoveDirectionRecurs(islands, paint, x + S.MoveX(newDir), y + S.MoveY(newDir), visitedList, path, possibilityList, maxDepth, currentStep + 1, ref currentWay, derivedVisited);
                 if (newPossibility > maxPossibility)
                 {
                     maxPossibility = newPossibility;

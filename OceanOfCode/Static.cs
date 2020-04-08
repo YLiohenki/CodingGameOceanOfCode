@@ -9,8 +9,10 @@
     public int width;
     public int centerX = 7;
     public int centerY = 7;
-    public int enemyPathCenterX = 14;
-    public int enemyPathCenterY = 14;
+    public int pathCenterX = 14;
+    public int pathCenterY = 14;
+    public int pathWidth = 29;
+    public int pathHeight = 29;
     public char[] possibleDirections = new char[] { 'N', 'E', 'W', 'S' };
     public int[][] adjustedCells = new int[][] { new int[] { -1, -1 }, new int[] { -1, 0 }, new int[] { -1, 1 }, new int[] { 0, -1 }, new int[] { 0, 1 }, new int[] { 1, -1 }, new int[] { 1, 0 }, new int[] { 1, 1 } };
     public int CoordToSector(int x, int y)
@@ -18,16 +20,17 @@
         return 1 + (y / 5) * 3 + (x / 5);
     }
 
-    public void EraseRecordedPath(bool[,] recordedPath)
+    public void EraseRecordedPath(PathMark[,] recordedPath)
     {
         for (int x = 0; x < width * 2 - 1; ++x)
         {
             for (int y = 0; y < height * 2 - 1; ++y)
             {
-                recordedPath[x, y] = false;
+                recordedPath[x, y].visited = false;
+                recordedPath[x, y].processed = false;
             }
         }
-        recordedPath[width - 1, height - 1] = true;
+        recordedPath[width - 1, height - 1].visited = true;
     }
 
 

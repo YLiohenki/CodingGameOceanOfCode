@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 public class Player
 {
@@ -29,14 +27,48 @@ public class PossiblePositions
         return result;
     }
 }
+public class PathMark
+{
+    public bool mine = false;
+    public bool silenceIn = false;
+    public bool silenceOut = false;
+    public bool visited = false;
+    public double probabilityVisited = 0.0;
+    public bool processed = false;
+    public PathMark Clone()
+    {
+        return new PathMark() { mine = mine, silenceIn = silenceIn, silenceOut = silenceOut, probabilityVisited = probabilityVisited, visited = visited, processed = processed };
+    }
+}
+
+public class Minefield
+{
+    public class Mine
+    {
+        public int x;
+        public int y;
+    }
+    public List<Mine> mines = new List<Mine>();
+    public bool[,] map;
+}
 public class TorpedoPosition
 {
+    public double evalFire;
     public int x;
     public int y;
     public double enemyExpectedDamage;
     public double myDamage;
     public bool canReach;
-    public int[,] reach;
+    public int oldProssibility;
+    public int newProssibility;
+    public int[,] toReach;
+    public int[,] fromReach;
+}
+public enum VisitedState
+{
+    unknow = 0,
+    fresh = 1,
+    old = 2
 }
 public class Map
 {
@@ -47,17 +79,32 @@ public class Map
     public bool[,] islands;
     public List<int[]> islandsList;
     public double[,] probablyDamage;
-    public bool[,] enemyPath;
-    public bool[,] myPath;
+    public PathMark[,] enemyPath;
+    public PathMark[,] myPath;
+    public PathMark[,] ClonePath(PathMark[,] path)
+    {
+        var result = new PathMark[29, 29];
+        for (int x = 0; x < 29; ++x)
+        {
+            for (int y = 0; y < 29; y++)
+            {
+                result[x, y] = path[x, y].Clone();
+            }
+        }
+        return result;
+    }
     public bool[,] visited;
+    public VisitedState[,] enemyDerivedVisited;
+    public VisitedState[,] myDerivedVisited;
     public bool[,] reachSilence;
     public int[,] paint;
     public bool[,] myMines;
     public double[,] enemyMines;
+    public Minefield myMinefield = new Minefield();
 
     public string[] getMap(string prop)
     {
-        if (prop == "enemyPossibility" || prop == "mePossibility" || prop == "visited" || prop == "islands" || prop == "reachSilence")
+        if (prop == "enemyPossibility" || prop == "mePossibility" || prop == "visited" || prop == "islands" || prop == "reachSilence" || prop == "enemyDerivedVisited" || prop == "myDerivedVisited")
         {
             var result = new string[height];
             for (int i = 0; i < height; ++i)
@@ -75,6 +122,10 @@ public class Map
                         line += islands[j, i] == true ? 'x' : '-';
                     else if (prop == "reachSilence")
                         line += reachSilence[j, i] == true ? 'x' : '-';
+                    else if (prop == "enemyDerivedVisited")
+                        line += enemyDerivedVisited[j, i] == VisitedState.unknow ? 'u' : (enemyDerivedVisited[j, i] == VisitedState.old ? 'o' : 'f');
+                    else if (prop == "myDerivedVisited")
+                        line += myDerivedVisited[j, i] == VisitedState.unknow ? 'u' : (enemyDerivedVisited[j, i] == VisitedState.old ? 'o' : 'f');
                 }
                 result[i] = line;
             }
@@ -89,9 +140,9 @@ public class Map
                 for (int j = 0; j < width * 2 - 1; ++j)
                 {
                     if (prop == "enemyPath")
-                        line += enemyPath[j, i] == true ? 'x' : '-';
+                        line += enemyPath[j, i].visited == true ? 'x' : '-';
                     else if (prop == "myPath")
-                        line += myPath[j, i] == true ? 'x' : '-';
+                        line += myPath[j, i].visited == true ? 'x' : '-';
                 }
                 result[i] = line;
             }
@@ -160,6 +211,9 @@ public class Order
                     break;
                 case ActionType.mine:
                     results.Add($"MINE {action.direction}");
+                    break;
+                case ActionType.trigger:
+                    results.Add($"TRIGGER {action.x} {action.y}");
                     break;
             }
         }

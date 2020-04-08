@@ -53,16 +53,28 @@ public class Program
         map.visited = new bool[width, height];
         map.enemyPossibility.map = new bool[width, height];
         map.mePossibility.map = new bool[width, height];
-        map.torpedo.reach = new int[width, height];
+        map.torpedo.toReach = new int[width, height];
+        map.torpedo.fromReach = new int[width, height];
         map.islandsList = new List<int[]>();
         map.paint = new int[width, height];
         map.enemyPossibility.total = 0;
         map.mePossibility.total = 0;
+        map.myDerivedVisited = new VisitedState[width, height];
+        map.enemyDerivedVisited = new VisitedState[width, height];
+        map.myMinefield.map = new bool[width, height];
 
-        map.enemyPath = new bool[width * 2 - 1, height * 2 - 1];
-        map.myPath = new bool[width * 2 - 1, height * 2 - 1];
-        map.enemyPath[width - 1, height - 1] = true;
-        map.myPath[width - 1, height - 1] = true;
+        map.enemyPath = new PathMark[width * 2 - 1, height * 2 - 1];
+        map.myPath = new PathMark[width * 2 - 1, height * 2 - 1];
+        for (int x = 0; x < width * 2 - 1; x++)
+        {
+            for (int y = 0; y < height * 2 - 1; y++)
+            {
+                map.enemyPath[x, y] = new PathMark();
+                map.myPath[x, y] = new PathMark();
+            }
+        }
+        map.enemyPath[width - 1, height - 1].visited = true;
+        map.myPath[width - 1, height - 1].visited = true;
         for (int y = 0; y < height; y++)
         {
             string line = fromConsole[1 + y];
