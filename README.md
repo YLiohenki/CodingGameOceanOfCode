@@ -1,4 +1,4 @@
 # CodingGameOceanOfCode
  Coding game ocean of code
 c# code
-Currently in bronze league
+https://www.codingame.com/contests/ocean-of-code/leaderboard/global
